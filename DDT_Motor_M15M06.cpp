@@ -1,4 +1,5 @@
 #include "DDT_Motor_M15M06.h"
+// #include <M5Unified.h>
 
 MotorHandler::MotorHandler(int RX, int TX)
 {
@@ -114,9 +115,27 @@ void MotorHandler::Send_Motor()
 
 void MotorHandler::Receive_Motor()
 {
-	if (Serial2.available())
+	static char buff[64];
+	int rx_size = Serial2.available();
+	if (rx_size)
 	{
-		Serial2.readBytes(Rx.data(), 10);
+		if(rx_size > sizeof(buff)) {
+			rx_size = sizeof(buff);
+		}
+		Serial2.readBytes(buff, rx_size);
+		if(rx_size > 10) {
+			// 自分で試したケースでは、電源投入時など受信バッファには余計なデータが格納される。
+			// そのため、最後の10バイトのみ扱う
+			memcpy(Rx.data(), buff + rx_size - 10, 10);
+		} else {
+			memcpy(Rx.data(), buff, rx_size);
+		}
+
+		// M5.Lcd.fillScreen(BLACK);
+		// M5.Lcd.setCursor(0, 0);
+		// for (int i = 0; i < 10; i++) {
+		// 	M5.Lcd.printf("%02X ", Rx[i]);
+		// }
 	}
 }
 
